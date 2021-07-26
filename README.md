@@ -19,6 +19,7 @@ A model in Sequelize has a name. This name does not have to be the same name of 
 # Providing MAgento table name directly
 You can simply tell Sequelize the name of the table directly as well:
 
+
 ```
 sequelize.define('User', {
   // ... (attributes)
@@ -26,6 +27,10 @@ sequelize.define('User', {
   tableName: 'Customers'
 });
 ```
+
+# Support of the Magento Commerce/Eterprise and Customisation also avalable
+
+if you need customisation and mucroservice for Magento Enterprise send me an email: (yegorshytikov@gmail.com)
 
 # Install
 
