@@ -2,7 +2,7 @@
 
 NodeJS implementation of the Magento 2 ORM without using legacy PHP
 
-This repo using Sequelize to connect to the MAgento 2 database diractly without invocation of the broken and slow Magento 2 PHP framework, so we won’t have to write any MYSQL queries.
+This repo using Sequelize to connect to the MAgento 2 database diractly without invocation o the broken MAgento 2 PHP framework, so we won’t have to write any MYSQL queries.
 
 
 Sequelize is pretty great ORM. From their website:
@@ -30,7 +30,11 @@ sequelize.define('User', {
 
 # Support of the Magento Commerce/Eterprise and Customisation also avalable
 
-if you need customisation and mucroservice for Magento Enterprise send me an email: (yegorshytikov@gmail.com)
+if you need customisation and mucroservice for Magento Enterprise send me an email: (yegorshytikov@gmail.com).
+
+Using this approach you can replace Magent Partialy or Entirely and achive beter performace and development speed.
+
+
 
 # Install
 
@@ -152,7 +156,7 @@ const sequelize = new Sequelize(
     'root',
     '',
     {
-     	host: '127.0.0.1',
+        host: '127.0.0.1',
         dialect: 'mysql',
         logging: console.log,
         // stop the auto-pluralization performed by Sequelize using the freezeTableName: true option
@@ -162,15 +166,28 @@ const sequelize = new Sequelize(
 
 var magentoModels = initModels(sequelize);
 
+
 async function getProduct(){
 var Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': '24-MB01'}});
 console.log(Product);
 
-var EAV_VAR = await Product.getCatalogProductEntityVarchar();
+var EAV_VAR = await Product.getCatalogProductEntityVarchars();
+
 console.log(EAV_VAR);
+
+var Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': '24-MB01'},
+include: [
+          { model: magentoModels.CatalogProductEntityVarchar, as: 'CatalogProductEntityVarchars' },
+          { model: magentoModels.CatalogProductEntityInt, as: 'CatalogProductEntityInts' },
+          { model: magentoModels.CatalogProductEntityText, as: 'CatalogProductEntityTexts' },
+	  { model: magentoModels.CatalogProductEntityDecimal, as: 'CatalogProductEntityDecimals'},
+	  { model: magentoModels.CatalogProductEntityDatetime, as: 'CatalogProductEntityDatetimes'},
+        ]
+});
+
+console.log(Product);
 }
 
 getProduct();
 
 ```
-
