@@ -2,7 +2,7 @@
 
 NodeJS implementation of the Magento 2 ORM without using legacy PHP
 
-This repo using Sequelize to connect to the MAgento 2 database diractly without invocation o the broken MAgento 2 PHP framework, so we won’t have to write any MYSQL queries.
+This repo using Sequelize to connect to the MAgento 2 database diractly without invocation of the broken and slow Magento 2 PHP framework, so we won’t have to write any MYSQL queries.
 
 
 Sequelize is pretty great ORM. From their website:
