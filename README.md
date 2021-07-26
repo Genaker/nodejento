@@ -191,3 +191,147 @@ console.log(Product);
 getProduct();
 
 ```
+
+# Create Node JS Magento 2 API 
+
+API Design
+Firstly, create a folder called controller. In controller, create files user.js and post.js . basically, we are going to write API to create Customer.
+```
+//customer.js
+const Customer = require('../Models').Customer;
+module.exports = {
+
+    async getAllCustomers(req,res) {
+
+        try {
+
+            const customerCollection = await Customer.find({});
+
+            res.status(201).send(userCollection);
+
+        }
+        catch(e){
+            console.log(e);
+
+            res.status(500).send(e);
+        }
+
+    },
+
+    async create(req,res) {
+        try {
+            const customerCollection = await Customer
+            .create({
+                email : req.body.email,
+            });
+
+            res.status(201).send(customerCollection);
+        }
+        catch(e){
+            console.log(e);
+            res.status(400).send(e);
+        }
+                    
+    },
+
+    async update(req,res) {
+
+        try{
+            const customerCollection = await Customer.find({
+                id : req.params.customerId
+            });
+
+            if(customerCollection){
+
+                const updatedCustomer = await Customer.update({
+                    id : req.body.email
+                });
+
+                res.status(201).send(updatedCustomer
+
+            }
+            else{
+
+                res.status(404).send("Customer Not Found");
+            }
+
+        }
+        catch(e){
+            console.log(e);
+
+            res.status(500).send(e);
+
+        }
+    } 
+}
+```
+create a folder called router and add the following code in index.js
+```
+//index.js
+const customerController = require('../controller').customer;
+module.exports = (app) => {
+
+    app.get('/api',(req,res) => {
+        res.status(200).send({
+            data : "Welcome Node Sequlize API v1"
+        })
+    })
+
+    app.get('/api/customers',customerController.getAllcustomers);
+
+    app.post('/api/customer/create',customerController.create);
+
+    app.put('/api/customer/:customerId',customerController.update);
+
+    app.get('/api/:customerId/posts',postController.getAllPostsOfCustomer);
+
+}
+```
+Finally, index.js file will look like
+```
+const express = require('express');
+const bodyParser = require('body-parser');
+const app = express();
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended : false}));
+
+require('./server/routes')(app);
+
+const PORT = 3456;
+app.listen(PORT,() => {
+    console.log(`Server is listening to port ${PORT}`)
+
+```
+
+# And don't forgot Add Auth Middleware to Magenyto Express API
+Something like this 
+```
+const OauthToken = require('../Models').OauthToken;
+
+passport.use(new HeaderAPIKeyStrategy(
+  { header: 'Authorization', prefix: 'Api-Token ' }, //Bearer
+  false,
+  function(apikey, done) {
+    OauthToken.findOne({ token: token }, function (err, user) {
+      if (err) { return done(err); }
+      if (!user) { return done(null, false); }
+      return done(null, user);
+    });
+  }
+));
+
+app.post('/api/authenticate', 
+  passport.authenticate('headerapikey', { session: false, failureRedirect: '/api/unauthorized' }),
+  function(req, res) {
+    res.json({ message: "Authenticated" })
+  });
+```
+
+You cannot find the token and token secret from Magento backend. You need to query these from the database directly.
+
+First login to Magento backend and go to System->Web Services->REST - Oauth Consumers. Take a note of the oauth consumer you need the keys for. You can also find consumer_key and consumer_secret from there if you click on that consumer's row. However it's easy to find the keys from DB also:
+
+The consumers and secrets are stored in DB table oauth_consumer. Find the necessary user by column "name" from there and copy the columns "key" and "secret". These are "consumer_key" and "consumer_secret". Take a note of entity_id in oauth_consumer table.
+
+Then look at DB table oauth_token. Find a record by consumer_id and copy columns "token" and "secret".
