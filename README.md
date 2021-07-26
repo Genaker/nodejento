@@ -109,3 +109,63 @@ Most of the methods provided by Sequelize are asynchronous and therefore return 
 
 Of course, using async and await works normally as well.
 
+Fetching associations - Eager Loading vs Lazy Loading
+The concepts of Eager Loading and Lazy Loading are fundamental to understand how fetching associations work in Sequelize. Lazy Loading refers to the technique of fetching the associated data only when you really want it; Eager Loading, on the other hand, refers to the technique of fetching everything at once, since the beginning, with a larger query.
+
+# Lazy Loading example
+const Product = await magentoModels.CatalogProductEntity.findOne(
+{where: {'sku': '10665'}}
+);
+
+const hisShip = await Product.getCatalogProductEntityVarchar();
+
+
+Observe that in the example above, we made two queries, only fetching the associated ship when we wanted to use it. This can be especially useful if we may or may not need the ship, perhaps we want to fetch it conditionally, only in a few cases; this way we can save time and memory by only fetching it when necessary.
+
+Note: the getCatalogProductEntityVarchar() instance method used above is one of the methods Sequelize automatically adds to Captain instances. There are others. You will learn more about them later in this guide.
+
+Eager Loading Example
+const Product = await CatalogProductEntity.findOne({
+  where: {
+    sku: "10665"
+  },
+  include: CatalogProductEntityVarchar
+});
+
+As shown above, Eager Loading is performed in Sequelize by using the include option. Observe that here only one query was performed to the database (which brings the associated data along with the instance).
+
+This was just a quick introduction to Eager Loading in Sequelize. There is a lot more to it, which you can learn at the dedicated guide on Eager Loading.
+
+# Example
+See test.js script
+```
+const { Sequelize } = require('sequelize');
+var initModels = require("./Models/init-models");
+
+const sequelize = new Sequelize(
+    'magento',
+    'root',
+    '',
+    {
+     	host: '127.0.0.1',
+        dialect: 'mysql',
+        logging: console.log,
+        // stop the auto-pluralization performed by Sequelize using the freezeTableName: true option
+        freezeTableName: true
+    });
+
+
+var magentoModels = initModels(sequelize);
+
+async function getProduct(){
+var Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': '24-MB01'}});
+console.log(Product);
+
+var EAV_VAR = await Product.getCatalogProductEntityVarchar();
+console.log(EAV_VAR);
+}
+
+getProduct();
+
+```
+
