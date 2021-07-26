@@ -2,7 +2,7 @@ const { Sequelize } = require('sequelize');
 var initModels = require("./Models/init-models");
 
 const sequelize = new Sequelize(
-    'magento24_nodegento',
+    'magento',
     'root',
     '',
     {
