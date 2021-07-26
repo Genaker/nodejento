@@ -1,0 +1,28 @@
+{
+  "name": "nodegento",
+  "version": "1.0.0",
+  "description": "Magento 2 NodeJS",
+  "main": "test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Genaker/nodegento.git"
+  },
+  "keywords": [
+    "magento",
+    "ecommerce",
+    "orm"
+  ],
+  "author": "Yehor Shytikov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Genaker/nodegento/issues"
+  },
+  "homepage": "https://github.com/Genaker/nodegento#readme",
+  "dependencies": {
+    "mysql2": "^2.2.5",
+    "sequelize": "^6.6.5"
+  }
+}
