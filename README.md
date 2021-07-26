@@ -145,6 +145,11 @@ As shown above, Eager Loading is performed in Sequelize by using the include opt
 
 This was just a quick introduction to Eager Loading in Sequelize. There is a lot more to it, which you can learn at the dedicated guide on Eager Loading.
 
+# Documentation 
+
+More documentation you can find here: 
+https://sequelize.org/master/
+
 # Example
 See test.js script
 ```
