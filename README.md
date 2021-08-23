@@ -23,16 +23,16 @@ You can simply tell Sequelize the name of the table directly as well.
 ```
 async function getProduct(){
 
-**// Get Product By SKU**
+// Get Product By SKU
 var Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': '24-MB01'}});
 console.log(Product);
 
-**// get Product EAV Varchar attributes**
+// get Product EAV Varchar attributes
 var ProductEAV = await Product.getCatalogProductEntityVarchars();
 
 console.log(ProductEAV);
 
-**// get Product with All EAV attributes**
+// get Product with All EAV attributes
 Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': '24-MB01'},
 include: [
           { model: magentoModels.CatalogProductEntityVarchar, as: 'CatalogProductEntityVarchars' },
