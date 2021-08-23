@@ -16,5 +16,33 @@ The model tells Sequelize several things about the entity it represents, such as
 
 A model in Sequelize has a name. This name does not have to be the same name of the table it represents in the Magento database. Usually, models have singular names (such as User) while tables have pluralized names (such as Users), although this is fully configurable.
 
-# Providing MAgento table name directly
-You can simply tell Sequelize the name of the table directly as well:
+You can simply tell Sequelize the name of the table directly as well.
+
+# Code Example
+
+```
+async function getProduct(){
+
+**// Get Product By SKU**
+var Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': '24-MB01'}});
+console.log(Product);
+
+**// get Product EAV Varchar attributes**
+var ProductEAV = await Product.getCatalogProductEntityVarchars();
+
+console.log(ProductEAV);
+
+**// get Product with All EAV attributes**
+Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': '24-MB01'},
+include: [
+          { model: magentoModels.CatalogProductEntityVarchar, as: 'CatalogProductEntityVarchars' },
+          { model: magentoModels.CatalogProductEntityInt, as: 'CatalogProductEntityInts' },
+          { model: magentoModels.CatalogProductEntityText, as: 'CatalogProductEntityTexts' },
+	        { model: magentoModels.CatalogProductEntityDecimal, as: 'CatalogProductEntityDecimals'},
+	        { model: magentoModels.CatalogProductEntityDatetime, as: 'CatalogProductEntityDatetimes'},
+        ]
+});
+
+console.log(Product);
+}
+```
