@@ -46,3 +46,34 @@ include: [
 console.log(Product);
 }
 ```
+
+## Nodegento Express.JS Microservices  
+The Magento less microservice can be built using two primary packages – Sequelize Magento ORM and Express. 
+
+The Sequelize package connects microservices to the Magento MySQL Database dirrectly using ORM models. The Express.js is a web application server framework, designed for building web applications. It is the de facto standard server framework for Node.js.
+```
+const express = require('express')
+const { Sequelize } = require('sequelize');
+var magentoModels = require("./Models/init-models");
+
+const app = express()
+const port = 3000
+const sequelize = new Sequelize(
+    'magento',
+    'root',
+    'password',
+    {
+        host: '127.0.0.1',
+        dialect: 'mysql',
+        freezeTableName: true
+    });
+
+app.get('/nodegento', async (req, res) => {
+  let Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': '24-MB01'}});
+  res.send(Product.toJSON())
+})
+
+app.listen(port, () => {
+  console.log(`Magento Node JS microservice listening at http://localhost:${port}`)
+})
+```
