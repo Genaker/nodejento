@@ -66,6 +66,7 @@ const sequelize = new Sequelize(
     {
         host: '127.0.0.1',
         dialect: 'mysql',
+	//prevent sequelize from pluralizing table names
         freezeTableName: true
     });
 
@@ -107,6 +108,84 @@ const products = await sequelize.query('SELECT * FROM category_product_entity', 
   model: Product
 });
 // Each element of `products` is now an instance of Product
+```
+
+# Eager Loading
+
+The associated models will be added by Sequelize in appropriately named, automatically created field(s) in the returned objects.
+
+In Sequelize, eager loading is mainly done by using the include option on a model finder query (such as findOne, findAll, etc).
+
+```
+const products = await Product.findAll({ include: CatalogProductEntityVarchar, as: 'attribute'  });
+console.log(JSON.stringify(products));
+```
+
+Above, the associated model was added to a new field called attribute in the fetched products.
+
+When you perform an **include** in a query, the included data will be added to an extra field in the returned objects, according to the following rules:
+
+When including something from a single association (hasOne or belongsTo) - the field name will be the singular version of the model name;
+When including something from a multiple association (hasMany or belongsToMany) - the field name will be the plural form of the model.
+In short, the name of the field will take the most logical form in each situation.
+
+Examples:
+```
+// Assuming Foo.hasMany(Bar)
+const foo = Foo.findOne({ include: Bar });
+// foo.bars will be an array
+// foo.bar will not exist since it doens't make sense
+
+// Assuming Foo.hasOne(Bar)
+const foo = Foo.findOne({ include: Bar });
+// foo.bar will be an object (possibly null if there is no associated model)
+// foo.bars will not exist since it doens't make sense
+
+// And so on
+```
+
+Overriding singulars and plurals when defining aliases
+When defining an alias for an association, instead of using simply { as: 'myAlias' }, you can pass an object to specify the singular and plural forms:
+```
+Project.belongsToMany(User, {
+  as: {
+    singular: 'líder',
+    plural: 'líderes'
+  }
+});
+```
+
+If you know that a model will always use the same alias in associations, you can provide the singular and plural forms directly to the model itself:
+```
+const User = sequelize.define('user', { /* ... */ }, {
+  name: {
+    singular: 'líder',
+    plural: 'líderes',
+  }
+});
+Project.belongsToMany(User);
+```
+
+# Use together with the KNEX.JS
+
+"Knex.js is a "batteries included" SQL query builder for Postgres, MSSQL, MySQL, MariaDB, SQLite3, Oracle, and Amazon Redshift designed to be flexible, portable, and fun to use. It features both traditional node style callbacks as well as a promise interface for cleaner async flow control, a stream interface, full-featured query and schema builders, transaction support (with savepoints), connection pooling and standardized responses between different query clients and dialects."
+
+```
+const knex = require('knex')(dbConfig)
+knex('table').insert({a: 'b'}).returning('*').toString();
+
+knex({ a: 'table', b: 'table' })
+  .select({
+    aTitle: 'a.title',
+    bTitle: 'b.title'
+  })
+  .whereRaw('?? = ??', ['a.column_1', 'b.column_2'])
+  
+knex('users')
+  .where('id')
+  .first();
+  
+knex.column('entity_id', 'sku', 'created_at').select().from('catalog_product_entity');
 ```
 
 ![NodeGento2](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-magento2.png)
