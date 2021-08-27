@@ -78,5 +78,35 @@ app.listen(port, () => {
   console.log(`Magento Node JS microservice listening at http://localhost:${port}`)
 })
 ```
+# Executing RAW SQL queries agains Magento Database
+
+As there are often use cases in which it is just easier to execute raw / already prepared SQL queries, you can use the sequelize.query method.
+
+By default the function will return two arguments - a results array, and an object containing metadata (such as amount of affected rows, etc). Note that since this is a raw query, the metadata are dialect specific. Some dialects return the metadata "within" the results object (as properties on an array). However, two arguments will always be returned, but for MSSQL and MySQL it will be two references to the same object.
+
+```
+const [results, metadata] = await sequelize.query("UPDATE users SET y = 42 WHERE x = 12");
+// Results will be an empty array and metadata will contain the number of affected rows.
+```
+
+In cases where you don't need to access the metadata you can pass in a query type to tell sequelize how to format the results. For example, for a simple select query you could do:
+
+```
+const { QueryTypes } = require('sequelize');
+const users = await sequelize.query("SELECT * FROM `users`", { type: QueryTypes.SELECT });
+// We didn't need to destructure the result here - the results were returned directly
+```
+
+Several other query types are available. Peek into the source for details.
+
+A second option is the model. If you pass a model the returned data will be instances of that model.
+
+```
+// Callee is the model definition. This allows you to easily map a query to a predefined model
+const products = await sequelize.query('SELECT * FROM category_product_entity', {
+  model: Product
+});
+// Each element of `products` is now an instance of Product
+```
 
 ![NodeGento2](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-magento2.png)
