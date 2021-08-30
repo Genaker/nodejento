@@ -228,6 +228,7 @@ Example Application Load Balancer request event
 Example of the Magento Lumbda with ELB:
 
 ```
+
 ```
 
 ![NodeGento2](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-magento2.png)
