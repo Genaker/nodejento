@@ -196,7 +196,7 @@ Elastic Load Balancing supports Lambda functions as a target for an Application 
 Elastic Load Balancing invokes your NodeJS Magento Lambda function synchronously with an event that contains the request body and metadata.
 
 Example Application Load Balancer request event
-
+```
 {
     "requestContext": {
         "elb": {
@@ -225,7 +225,9 @@ Example Application Load Balancer request event
     "body": "",
     "isBase64Encoded": false
 }
-Example of the Magento Lumbda with ELB:
+```
+
+## Example of the Magento Lumbda with ELB:
 
 ```
 
