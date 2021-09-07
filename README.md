@@ -206,7 +206,8 @@ Example Application Load Balancer request event
     "httpMethod": "GET",
     "path": "/lambda",
     "queryStringParameters": {
-        "query": "1234ABCD"
+        "query": "1234ABCD",
+	"sku": "24-MB01"
     },
     "headers": {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
@@ -227,10 +228,43 @@ Example Application Load Balancer request event
 }
 ```
 
-## Example of the Magento Lumbda with ELB:
+## Example of the Magento Lumbda with ELB or API Gataway:
 
 ```
+const { Sequelize } = require('sequelize');
+var initModels = require("./Models/init-models");
 
+const sequelize = new Sequelize(
+    'magento',
+    'root',
+    '',
+    {
+        host: '127.0.0.1',
+        dialect: 'mysql',
+        logging: console.log,
+        freezeTableName: true
+    }
+);
+
+var magentoModels = initModels(sequelize);
+
+exports.handler = async function (event, context) {
+
+    console.log(event);
+    // Get Product Record By SKU GET parameter
+    var Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': event.queryStringParameters.sku}});
+    console.log(Product);
+
+    return {
+        "isBase64Encoded": false,
+        "statusCode": 200,
+        "statusDescription": "200 OK",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "body": JSON.stringify(Product)
+    }
+}
 ```
 
 ![NodeJento2](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-magento2.png)
