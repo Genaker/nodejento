@@ -1,5 +1,5 @@
 {
-  "name": "nodegento",
+  "name": "nodejento",
   "version": "1.0.0",
   "description": "Magento 2 NodeJS",
   "main": "test.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Genaker/nodegento.git"
+    "url": "git+https://github.com/Genaker/nodejento.git"
   },
   "keywords": [
     "magento",
@@ -18,9 +18,9 @@
   "author": "Yehor Shytikov",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Genaker/nodegento/issues"
+    "url": "https://github.com/Genaker/nodejento/issues"
   },
-  "homepage": "https://github.com/Genaker/nodegento#readme",
+  "homepage": "https://github.com/Genaker/nodejento#readme",
   "dependencies": {
     "mysql2": "^2.2.5",
     "sequelize": "^6.6.5"
