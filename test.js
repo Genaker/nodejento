@@ -36,6 +36,8 @@ include: [
 });
 
 console.log(Product);
+	
+return Product;
 }
 
 getProduct();
