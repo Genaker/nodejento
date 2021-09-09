@@ -39,8 +39,8 @@ include: [
           { model: magentoModels.CatalogProductEntityVarchar, as: 'CatalogProductEntityVarchars' },
           { model: magentoModels.CatalogProductEntityInt, as: 'CatalogProductEntityInts' },
           { model: magentoModels.CatalogProductEntityText, as: 'CatalogProductEntityTexts' },
-	        { model: magentoModels.CatalogProductEntityDecimal, as: 'CatalogProductEntityDecimals'},
-	        { model: magentoModels.CatalogProductEntityDatetime, as: 'CatalogProductEntityDatetimes'},
+	  { model: magentoModels.CatalogProductEntityDecimal, as: 'CatalogProductEntityDecimals'},
+	  { model: magentoModels.CatalogProductEntityDatetime, as: 'CatalogProductEntityDatetimes'},
         ]
 });
 
