@@ -48,6 +48,9 @@ console.log(Product);
 }
 ```
 
+## Magento/Adobe Commerce edition Node JS Support 
+If you have any issues and Enterprise (Adobe Commerce) Version support create a ticket or drop me email at: yegorshytikov@gmail.com
+
 ## Nodejento Express.JS Microservices  
 The Magento less microservice can be built using two primary packages – Sequelize Magento ORM and Express. 
 
