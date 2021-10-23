@@ -270,4 +270,14 @@ exports.handler = async function (event, context) {
 }
 ```
 
+# Run Magento with Express on AWS Lambda
+
+Preparing the Express app
+Your Express application no longer needs to listen on a TCP port – API Gateway will handle the web requests. Remove the usual call to app.listen, and just export the application from the module, so it can be used in a Lambda function.
+```
+// app.listen(3000) // <-- find this line and delete it or comment it out
+module.exports = app; // add this line
+```
+
+
 ![NodeJento2](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-magento2.png)
