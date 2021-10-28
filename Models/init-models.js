@@ -700,6 +700,7 @@ function initModels(sequelize) {
   CatalogProductEntity.belongsToMany(CatalogProductEntity, { as: 'ChildIdCatalogProductEntities', through: CatalogProductRelation, foreignKey: "parent_id", otherKey: "child_id" });
   CatalogProductEntity.belongsToMany(CatalogProductEntity, { as: 'ParentIdCatalogProductEntities', through: CatalogProductRelation, foreignKey: "child_id", otherKey: "parent_id" });
   CatalogProductEntity.belongsToMany(StoreWebsite, { as: 'WebsiteIdStoreWebsiteCatalogProductWebsites', through: CatalogProductWebsite, foreignKey: "product_id", otherKey: "website_id" });
+  CatalogProductEntity.belongsToMany(CatalogProductEntityMediaGallery, { as: 'CatalogProductEntityMediaGallery', through: CatalogProductEntityMediaGalleryValueToEntity, foreignKey: "entity_id", otherKey: "value_id" });
   Catalogrule.belongsToMany(CustomerGroup, { as: 'CustomerGroupIdCustomerGroups', through: CatalogruleCustomerGroup, foreignKey: "rule_id", otherKey: "customer_group_id" });
   Catalogrule.belongsToMany(StoreWebsite, { as: 'WebsiteIdStoreWebsiteCatalogruleWebsites', through: CatalogruleWebsite, foreignKey: "rule_id", otherKey: "website_id" });
   CheckoutAgreement.belongsToMany(Store, { as: 'StoreIdStores', through: CheckoutAgreementStore, foreignKey: "agreement_id", otherKey: "store_id" });
