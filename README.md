@@ -114,11 +114,13 @@ If true, runs a separate query to fetch the associated instances, only supported
 
 Sequelize has parameter called **separate**. Separate parameter was crucial in optimizing complex queries where you want to include associated nested data.
 
-It’s only available for **hasManu** associations, it takes those previously nested queries and performs them individually or separately using **WHERE IN([])** SQL condition. As a bonus, the results from each query are joined together later in memory, so we were able to maintain the same response and not have to alter how we were setting the data.
+It’s only available for **hasMany** (Only HasMany associations support include.separate) associations, it takes those previously nested queries and performs them individually or separately using **WHERE IN([])** SQL condition. As a bonus, the results from each query are joined together later in memory, so we were able to maintain the same response and not have to alter how we were setting the data.
 What this meant for our situation: we were able to decouple our queries, perform them separate from one another and get a huge boost in efficiency. Measuring the before and after performance of a few endpoints, we estimated a 10x improvement. We were also able to target other queries with similar methods and associations and gain performance optimizations there as well.
 
 Previsous default joing approach takes: ORM: 57.209ms
 Separate approach takes: ORM: 15.439ms
+
+For the huge collection 2100 Products: before 12s after 1.029s
 
 Result SQL query will looks like:
 ```
