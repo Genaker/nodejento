@@ -324,3 +324,14 @@ module.exports = app; // add this line
 
 
 ![NodeJento2](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-magento2.png)
+
+## GraphQL support
+Use graphql-sequelize Resolve helpers
+```
+import { resolver } from "graphql-sequelize";
+
+resolver(SequelizeModel[, options]);
+
+```
+A helper for resolving GraphQL queries targeted at Magento Sequelize models or associations. 
+Please take a look at the documentation to best get an idea of implementation: https://github.com/mickhansen/graphql-sequelize
