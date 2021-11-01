@@ -82,6 +82,45 @@ app.listen(port, () => {
   console.log(`Magento Node JS microservice listening at http://localhost:${port}`)
 })
 ```
+
+# Live Express server reloading 
+
+**Nodemon** is a utility that will monitor for any changes in your source and automatically restart your server. Perfect for development.
+
+Swap nodemon instead of node to run your code, and now your process will automatically restart when your code changes. To install, get node.js, then from your terminal run:
+
+```
+npm install nodemon --save
+```
+Now run **nodemon app.js** and you never have to restart again!
+
+In the package.json you can use: 
+
+```
+scripts:{
+"start":"node app.js",
+"dev": "nodemon app.js"
+}
+```
+
+# Sequilize Performance improvement
+
+options.include.separate	boolean	
+If true, runs a separate query to fetch the associated instances, only supported for hasMany associations.
+
+Sequelize has parameter called **separate**. Separate parameter was crucial in optimizing complex queries where you want to include associated nested data.
+
+It’s only available for **hasManu** associations, it takes those previously nested queries and performs them individually or separately using **WHERE IN([])** SQL condition. As a bonus, the results from each query are joined together later in memory, so we were able to maintain the same response and not have to alter how we were setting the data.
+What this meant for our situation: we were able to decouple our queries, perform them separate from one another and get a huge boost in efficiency. Measuring the before and after performance of a few endpoints, we estimated a 10x improvement. We were also able to target other queries with similar methods and associations and gain performance optimizations there as well.
+
+Previsous default joing approach takes: ORM: 57.209ms
+Separate approach takes: ORM: 15.439ms
+
+Result SQL query will looks like:
+```
+SELECT `value_id`, `store_id`, `value`, `attribute_id`, `entity_id` FROM `catalog_product_entity_varchar` AS `CatalogProductEntityVarchar` WHERE (`CatalogProductEntityVarchar`.`entity_id` IN (57, 58, 77, 89);
+```
+
 # Executing RAW SQL queries agains Magento Database
 
 As there are often use cases in which it is just easier to execute raw / already prepared SQL queries, you can use the sequelize.query method.
