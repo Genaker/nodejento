@@ -1,4 +1,4 @@
-# Nodejento (formerly known as NodeGento)
+# NodeJento (formerly known as NodeGento)
 
 NodeJS implementation of the Magento 2 ORM without using legacy PHP
 
