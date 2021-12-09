@@ -60,6 +60,8 @@ let EAV = models.EavAttribute.findAll({
     raw: true,
     plain: false,
 });
+
+//ToDo: add filter by entity type Product (4)
 let EavLabels = models.EavAttributeLabel.findAll();
 //Replaced with Knex -> let EavCatalog = sequelize.query("select * from eav_attribute as eav left join catalog_eav_attribute as catalog on eav.attribute_id = catalog.attribute_id", {type: sequelize.QueryTypes.SELECT })
 let EavCatalog = myKnex.select().from(models.CatalogEavAttribute.tableName)
