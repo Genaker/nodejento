@@ -356,6 +356,23 @@ const start = async () => {
 start()
 ```
 
+# Magento microservices using Metarhia Stack
+
+Server init file: server.js
+
+```
+'use strict';
+
+require('impress');
+```
+
+API endpoint example: application/api/nodejento/example.js
+```
+async () => {
+  return { result: 'success', data };
+};
+```
+
 ## GraphQL support
 Use graphql-sequelize Resolve helpers
 ```
