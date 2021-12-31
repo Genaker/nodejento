@@ -1,6 +1,6 @@
 # NodeJento (formerly known as NodeGento)
 
-NodeJS implementation of the Magento 2 ORM without using legacy PHP
+NodeJS implementation of the Magento 2 ORM and Microservice Framework components without using legacy PHP.
 
 This repo uses Sequelize to connect to the Magento 2 database directly without invocation of the Magento 2 PHP framework, so we won’t have to write any MYSQL queries.
 
