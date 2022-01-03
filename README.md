@@ -56,9 +56,9 @@ console.log(Product);
 If you have any issues and Enterprise (Adobe Commerce) Version support create a ticket or drop me email at: yegorshytikov@gmail.com
 
 ## Nodejento Express.JS Microservices  
-The Magento less microservice can be built using two primary packages – Sequelize Magento ORM and Express. 
+The Magento less microservice can be built using two primary packages – Sequelize Magento ORM and Express or Fastify. 
 
-The Sequelize package connects microservices to the Magento MySQL Database dirrectly using ORM models. The Express.js is a web application server framework, designed for building web applications. It is the de facto standard server framework for Node.js.
+The Sequelize package connects microservices to the Magento MySQL Database dirrectly using ORM models. The Express.js/Fastify is a web application server framework, designed for building web applications. It is the de facto standard server framework for Node.js.
 ```
 const express = require('express')
 const { Sequelize } = require('sequelize');
