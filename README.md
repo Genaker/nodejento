@@ -13,6 +13,9 @@ Sequelize is a pretty great ORM. From their website:
 Sequilize ORM is realy popular and has 25K stars on GitHub:
 
 ![Squilize ORM](https://user-images.githubusercontent.com/9213670/139718372-90124eeb-85bf-4b54-a556-aadf7895c765.png)
+Sequilize has 1M+ weekly downlods:
+![Sequlize Downlods](https://user-images.githubusercontent.com/9213670/153321396-ce7126c4-546c-4237-b233-252f25367ba3.png)
+
 
 # Concept
 Models are the essence of Sequelize. A model is an abstraction that represents a table in your Magento 2,1 database. In Sequelize, it is a class that extends Model.
