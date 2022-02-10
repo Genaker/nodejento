@@ -383,3 +383,21 @@ resolver(SequelizeModel[, options]);
 ```
 A helper for resolving GraphQL queries targeted at Magento Sequelize models or associations. 
 Please take a look at the documentation to best get an idea of implementation: https://github.com/mickhansen/graphql-sequelize
+
+# Fetch Magento app/etc/env.php config as a JSON 
+
+Now we can use magento env.php configuration file to fetch database credentials.
+
+Example: 
+
+```
+const magentoConfig = require('./config.js');
+magentoConfig.BP = "/var/www/html/magento/";
+magentoConfig.getBasePath();
+magentoConfig.getDBConfig().then((p)=> console.log(p));
+
+```
+
+Result: 
+
+![image](https://user-images.githubusercontent.com/9213670/153312851-9c95e513-c403-4ed1-9662-0720a90b91e9.png)
