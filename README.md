@@ -2,7 +2,15 @@
 
 NodeJS implementation of the Magento 2 ORM and Microservice Framework components without using legacy PHP.
 
-This repo uses Sequelize to connect to the Magento 2 database directly without invocation of the Magento 2 PHP framework, so we won’t have to write any MYSQL queries.
+Delivering great shopping experiences can be tricky, involving many factors. But two are undoubtedly part of the equation: Customers need to find what they’re looking for and they need to do it quickly. That’s why we developed Catalog Service for Adobe Commerce.
+ 
+NodeJento it is a NodeJs service that provides an additional API surface that makes product and category and any other data retrieval faster. 
+
+Delivering great shopping experiences with Magento can be tricky, involving many factors. But two are undoubtedly part of the equation: Customers need to find what they’re looking for and they need to do it quickly. That’s why we developed NodeJento for Adobe Commerce.
+
+NodeJento is written in a highly scalable event-driven NodeJS/JavaScript. JavaScript is one of the most popular programming languages and nearly every developer is familiar with it.
+
+This repo uses Sequelize library to connect to the Magento 2 database directly without invocation of the Magento 2 PHP framework, so we won’t have to write any MYSQL queries.
 
 ![Laragento](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-logo.png)
 
