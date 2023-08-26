@@ -1,8 +1,6 @@
 # NodeJento (formerly known as NodeGento)
 
 NodeJS implementation of the Magento 2 ORM and Microservice Framework components without using legacy PHP.
-
-Delivering great shopping experiences can be tricky, involving many factors. But two are undoubtedly part of the equation: Customers need to find what they’re looking for and they need to do it quickly. That’s why we developed Catalog Service for Adobe Commerce.
  
 NodeJento it is a NodeJs service that provides an additional API surface that makes product and category and any other data retrieval faster. 
 
