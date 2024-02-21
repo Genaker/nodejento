@@ -24,11 +24,11 @@ Sequilize has 1M+ weekly downlods:
 
 
 # Concept
-Models are the essence of Sequelize. A model is an abstraction that represents a table in your Magento 2,1 database. In Sequelize, it is a class that extends Model.
+Models are the essence of Sequelize. A model is an abstraction that represents a table in your Magento 2,1 database. In Sequelize, is a class that extends Model.
 
 The model tells Sequelize several things about the entity it represents, such as the name of the table in the database and which columns it has (and their data types).
 
-A model in Sequelize has a name. This name does not have to be the same name of the table it represents in the Magento database. Usually, models have singular names (such as User) while tables have pluralized names (such as Users), although this is fully configurable.
+A model in Sequelize has a name. This name does not have to be the same name as the table it represents in the Magento database. Usually, models have singular names (such as User) while tables have pluralized names (such as Users), although this is fully configurable.
 
 You can simply tell Sequelize the name of the table directly as well.
 
@@ -121,33 +121,33 @@ scripts:{
 options.include.separate	boolean	
 If true, runs a separate query to fetch the associated instances, only supported for hasMany associations.
 
-Sequelize has parameter called **separate**. Separate parameter was crucial in optimizing complex queries where you want to include associated nested data.
+Sequelize has a parameter called **separate**. Separate parameters were crucial in optimizing complex queries where you want to include associated nested data.
 
 It’s only available for **hasMany** (Only HasMany associations support include.separate) associations, it takes those previously nested queries and performs them individually or separately using **WHERE IN([])** SQL condition. As a bonus, the results from each query are joined together later in memory, so we were able to maintain the same response and not have to alter how we were setting the data.
-What this meant for our situation: we were able to decouple our queries, perform them separate from one another and get a huge boost in efficiency. Measuring the before and after performance of a few endpoints, we estimated a 10x improvement. We were also able to target other queries with similar methods and associations and gain performance optimizations there as well.
+What this meant for our situation: we were able to decouple our queries, perform them separately from one another and get a huge boost in efficiency. Measuring the before and after performance of a few endpoints, we estimated a 10x improvement. We were also able to target other queries with similar methods and associations and gain performance optimizations there as well.
 
-Previsous default joing approach takes: ORM: 57.209ms
+Previous default joining approach takes: ORM: 57.209ms
 Separate approach takes: ORM: 15.439ms
 
 For the huge collection 2100 Products: before 12s after 1.029s
 
-Result SQL query will looks like:
+Result SQL query will look like:
 ```
 SELECT `value_id`, `store_id`, `value`, `attribute_id`, `entity_id` FROM `catalog_product_entity_varchar` AS `CatalogProductEntityVarchar` WHERE (`CatalogProductEntityVarchar`.`entity_id` IN (57, 58, 77, 89);
 ```
 
-# Executing RAW SQL queries agains Magento Database
+# Executing RAW SQL queries against Magento Database
 
 As there are often use cases in which it is just easier to execute raw / already prepared SQL queries, you can use the sequelize.query method.
 
-By default the function will return two arguments - a results array, and an object containing metadata (such as amount of affected rows, etc). Note that since this is a raw query, the metadata are dialect specific. Some dialects return the metadata "within" the results object (as properties on an array). However, two arguments will always be returned, but for MSSQL and MySQL it will be two references to the same object.
+By default, the function will return two arguments - a results array, and an object containing metadata (such as amount of affected rows, etc). Note that since this is a raw query, the metadata are dialect-specific. Some dialects return the metadata "within" the results object (as properties on an array). However, two arguments will always be returned, but for MSSQL and MySQL it will be two references to the same object.
 
 ```
 const [results, metadata] = await sequelize.query("UPDATE users SET y = 42 WHERE x = 12");
 // Results will be an empty array and metadata will contain the number of affected rows.
 ```
 
-In cases where you don't need to access the metadata you can pass in a query type to tell sequelize how to format the results. For example, for a simple select query you could do:
+In cases where you don't need to access the metadata, you can pass in a query type to tell sequelize how to format the results. For example, for a simple select query you could do:
 
 ```
 const { QueryTypes } = require('sequelize');
@@ -169,7 +169,7 @@ const products = await sequelize.query('SELECT * FROM category_product_entity', 
 
 # Eager Loading
 
-The associated models will be added by Sequelize in appropriately named, automatically created field(s) in the returned objects.
+The associated models will be added by Sequelize inappropriately named, automatically created field(s) in the returned objects.
 
 In Sequelize, eager loading is mainly done by using the include option on a model finder query (such as findOne, findAll, etc).
 
@@ -191,12 +191,12 @@ Examples:
 // Assuming Foo.hasMany(Bar)
 const foo = Foo.findOne({ include: Bar });
 // foo.bars will be an array
-// foo.bar will not exist since it doens't make sense
+// foo.bar will not exist since it doesn't make sense
 
 // Assuming Foo.hasOne(Bar)
 const foo = Foo.findOne({ include: Bar });
 // foo.bar will be an object (possibly null if there is no associated model)
-// foo.bars will not exist since it doens't make sense
+// foo.bars will not exist since it doesn't make sense
 
 // And so on
 ```
@@ -246,7 +246,7 @@ knex.column('entity_id', 'sku', 'created_at').select().from('catalog_product_ent
 ```
 # Use Magento NodeJS with AWS Lambda Serverless
 
-You can use a Lambda function to process requests from an Application Load Balancer (ELB) and API Geteway 
+You can use a Lambda function to process requests from an Application Load Balancer (ELB) and API Gateway 
 
 Elastic Load Balancing supports Lambda functions as a target for an Application Load Balancer. Use load balancer rules to route HTTP requests to a function, based on path or header values. Process the request and return an HTTP response from your Lambda function.
 
@@ -336,7 +336,7 @@ module.exports = app; // add this line
 
 ![NodeJento2](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-magento2.png)
 
-# Run Magento Microdservice with Fastyfy 
+# Run Magento Microservice with Fastyfy 
 
 Why Fastyfy.
 An efficient server implies a lower cost of the infrastructure, a better responsiveness under load and happy users. How can you efficiently handle the resources of your server, knowing that you are serving the highest number of requests possible, without sacrificing security validations and handy development?
@@ -395,7 +395,7 @@ Please take a look at the documentation to best get an idea of implementation: h
 
 # Fetch Magento app/etc/env.php config as a JSON 
 
-Now we can use magento env.php configuration file to fetch database credentials.
+Now we can use the magento env.php configuration file to fetch database credentials.
 
 Example: 
 
