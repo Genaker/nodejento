@@ -2,13 +2,13 @@
 
 NodeJS implementation of the Magento 2 ORM and Microservice Framework components without using legacy PHP.
  
-NodeJento it is a NodeJs service that provides an additional API surface that makes product and category and any other data retrieval faster. 
+NodeJento is a NodeJs service providing an additional API surface that makes product, category, and any other data retrieval faster. 
 
 Delivering great shopping experiences with Magento can be tricky, involving many factors. But two are undoubtedly part of the equation: Customers need to find what they’re looking for and they need to do it quickly. That’s why we developed NodeJento for Adobe Commerce.
 
 NodeJento is written in a highly scalable event-driven NodeJS/JavaScript. JavaScript is one of the most popular programming languages and nearly every developer is familiar with it.
 
-This repo uses Sequelize library to connect to the Magento 2 database directly without invocation of the Magento 2 PHP framework, so we won’t have to write any MYSQL queries.
+This repo uses the Sequelize library to connect to the Magento 2 database directly without invocation of the Magento 2 PHP framework, so we won’t have to write any MYSQL queries.
 
 ![Laragento](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-logo.png)
 
@@ -16,13 +16,49 @@ Sequelize is a pretty great ORM. From their website:
 
 “Sequelize is a promise-based ORM for Node.js and io.js. It supports the dialects PostgreSQL, MySQL, MariaDB, SQLite and MSSQL and features solid transaction support, relations, read replication and more.”
 
-Sequilize ORM is realy popular and has 25K stars on GitHub:
+Sequilize ORM is really popular and has 25K stars on GitHub:
 
 ![Squilize ORM](https://user-images.githubusercontent.com/9213670/139718372-90124eeb-85bf-4b54-a556-aadf7895c765.png)
-Sequilize has 1M+ weekly downlods:
+Sequilize has 1M+ weekly downloads:
 ![Sequlize Downlods](https://user-images.githubusercontent.com/9213670/153321396-ce7126c4-546c-4237-b233-252f25367ba3.png)
 
+# Installation
+Go to the magento root directory 
+ 	
+```
+apt install npm #if not installed
+npm install https://github.com/Genaker/nodejento/
+node node_modules/nodejento/config-test.js
+```
+you will see the results of DB connection array
 
+Make raw DB query with Knex:
+```
+nodejs
+const DB = require('nodejento/config')
+let connection = require('knex')({client: 'mysql', connection: DB.getDBConfig()});
+connection.raw("select 1+1 as result").then((e) => console.log(e))
+connection.select('*').from('core_config_data').then((r) => console.log(r))
+```
+All functions are async but with the console, it works ok ;)
+
+## Using Sequelize Laragento ORM Product model
+```
+const { Sequelize } = require('sequelize');
+var magentoModels = require("./Models/init-models");
+const sequelize = new Sequelize(
+    'magento',
+    'root',
+    'password',
+    {
+        host: '127.0.0.1',
+        dialect: 'mysql',
+	//prevent sequelize from pluralizing table names
+        freezeTableName: true
+    });
+
+magentoModels.CatalogProductEntity.findOne({ where: {'sku': '24-MB01'}}).then((p) => console.log(p.toJSON()));
+```
 # Concept
 Models are the essence of Sequelize. A model is an abstraction that represents a table in your Magento 2,1 database. In Sequelize, is a class that extends Model.
 
