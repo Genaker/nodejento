@@ -16,7 +16,7 @@ async function getMagentoConfig(scope = this){
 let magentoFonfigFile = scope.BP + "app/etc/env.php";
 
 if (!fs.existsSync(magentoFonfigFile)) {
-    throw new Error("Magento configuration file doesn't exist");
+    throw new Error("Magento configuration file doesn't exist at " + scope.BP + "app/etc/env.php Try to change BP variable at your code");
 }
 
 const cmd = `php -r 'echo json_encode(include "${magentoFonfigFile}");'`; 
