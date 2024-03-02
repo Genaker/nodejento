@@ -21,7 +21,8 @@ Sequilize ORM is really popular and has 25K stars on GitHub:
 ![Squilize ORM](https://user-images.githubusercontent.com/9213670/139718372-90124eeb-85bf-4b54-a556-aadf7895c765.png)
 Sequilize has 1M+ weekly downloads:
 ![Sequlize Downlods](https://user-images.githubusercontent.com/9213670/153321396-ce7126c4-546c-4237-b233-252f25367ba3.png)
-in 2024 this number is 2M+ downloads:
+
+In 2024 this number is 2M+ downloads and 28.9K stars:
 ![image](https://github.com/Genaker/nodejento/assets/9213670/f84b77a4-95b4-44d1-8dbb-49d6f7f52082)
 
 # Installation
