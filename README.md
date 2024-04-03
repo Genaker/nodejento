@@ -434,6 +434,12 @@ Please take a look at the documentation to best get an idea of implementation: h
 
 # Fetch Magento app/etc/env.php config as a JSON 
 
+To make it simple, we configure it to JSON and use it, and read config.json from the original config
+
+```
+php -r '$x = include("app/etc/env.php"); echo json_encode($x);' > config.json
+```
+
 Now we can use the magento env.php configuration file to fetch database credentials.
 
 Example: 
