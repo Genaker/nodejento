@@ -413,10 +413,9 @@ Any file inside the folder **pages/api** is mapped to **/api/*** and will be tre
 ## Lets Create Product Data API 
 Create file **pages/api/product.js**
 ```
-const { Sequelize } = require('sequelize');
 var initModels = require("./Models/init-models");
 // Magento DB connection here 
- conconst conection = require("../connection");
+conconst conection = require("../connection");
 
 var magentoModels = initModels(connection);
 
