@@ -408,22 +408,26 @@ start()
 
 API routes provide a solution to build a public API with Next.js.
 
-Any file inside the folder **pages/api** is mapped to **/api/*** and will be treated as an API endpoint instead of a page.
+Any file inside the folder **pages/api** is mapped to **/api/*** and will be treated as an API endpoint instead of a page. <br />
+OR you can create **pages/api/product/route.js** <br />
+A route file allows you to create custom request handlers for a given route. The following HTTP methods are supported: GET, POST, PUT, PATCH, DELETE, HEAD, and OPTIONS.
+
 
 ## Lets Create Product Data API 
 Create file **pages/api/product.js**
 ```
-var initModels = require("./Models/init-models");
+const initModels = require("./Models/init-models");
 // Magento DB connection here 
 conconst conection = require("../connection");
 
-var magentoModels = initModels(connection);
+let allMagentoModels = initModels(connection);
+let {catalogProductEntity} = allMagentoModels;
 
 const handler = async (req, res) => {
   try {
       if( req.method === "GET") {
-        var Product = await magentoModels.CatalogProductEntity.findOne({ where: {'sku': req.query.sku}});
-        res.status(200).json(Product);
+        var Product = await catalogProductEntity.findOne({ where: {'sku': req.query.sku}});
+        res.status(200).json({product: Product});
       } else {
 	res.setHeader("Allow", ["GET"]);
         res.status(405).end(`Method ${method} Not Allowed With NextJS Magento Product API`);
@@ -439,6 +443,7 @@ export default handler;
 
 ```
 Now You have Product API at http://localhost:3000/api/product?sku=testSku
+The next step is to move it to **pages/API/product/[sku].js** to remove query parameters. 
 
 
 # Magento microservices using Metarhia Stack
