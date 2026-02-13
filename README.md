@@ -12,6 +12,60 @@ This repo uses the Sequelize library to connect to the Magento 2 database direct
 
 ![Laragento](https://raw.githubusercontent.com/Genaker/nodegento/main/nodegento-logo.png)
 
+## 🚀 What's New in v2.0 - Architecture Improvements
+
+**NodeJento v2.0** features a completely redesigned architecture with production-ready improvements:
+
+- ✅ **Environment-based Configuration** - No more hardcoded credentials, use `.env` files
+- ✅ **Service Layer Architecture** - Proper separation of concerns with dedicated services
+- ✅ **Comprehensive Error Handling** - Production-ready error management with proper HTTP status codes
+- ✅ **Smart Caching** - Memory-safe caching with TTL and size limits (prevents memory leaks)
+- ✅ **Input Validation** - Request validation middleware for secure endpoints
+- ✅ **Updated Dependencies** - Latest Sequelize (v6.35.2) and MySQL2 (v3.6.5)
+- ✅ **Developer Experience** - Hot reload with nodemon, better debugging
+
+👉 **See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete architecture documentation.**
+
+### Quick Start (v2.0)
+
+```bash
+# Install dependencies
+npm install
+
+# Copy environment configuration
+cp .env.example .env
+
+# Edit .env with your database credentials
+# nano .env or use your favorite editor
+
+# Run in development mode (with auto-reload)
+npm run dev
+
+# Or run in production mode
+npm start
+```
+
+The improved version uses `app-improved.js` and is fully backward compatible. The original `app.js` is preserved for existing users.
+
+### New Project Structure
+
+```
+nodejento/
+├── src/
+│   ├── config/           # Centralized configuration
+│   ├── services/         # Business logic layer
+│   ├── middleware/       # Error handling, validation
+│   └── utils/            # Utilities (Cache, etc.)
+├── Models/               # Sequelize ORM models
+├── app-improved.js       # New improved application
+├── app.js               # Original (preserved)
+└── ARCHITECTURE.md       # Architecture documentation
+```
+
+---
+
+# Sequelize ORM
+
 Sequelize is a pretty great ORM. From their website:
 
 “Sequelize is a promise-based ORM for Node.js and io.js. It supports the dialects PostgreSQL, MySQL, MariaDB, SQLite and MSSQL and features solid transaction support, relations, read replication and more.”

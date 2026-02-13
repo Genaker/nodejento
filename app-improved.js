@@ -8,6 +8,7 @@ const { Sequelize } = require('sequelize');
 const config = require('./src/config');
 const magentoModels = require('./Models/init-models');
 const { errorHandler, notFoundHandler, asyncHandler } = require('./src/middleware/errorHandler');
+const { validate } = require('./src/middleware/validation');
 const EavService = require('./src/services/EavService');
 const ProductTransformer = require('./src/services/ProductTransformer');
 const ProductService = require('./src/services/ProductService');
@@ -73,7 +74,7 @@ app.get('/', (req, res) => {
 });
 
 // Main product endpoint with improved error handling and caching
-app.get('/nodejento', asyncHandler(async (req, res) => {
+app.get('/nodejento', validate.storeIds, asyncHandler(async (req, res) => {
   const requestId = Date.now() % 1000;
   const cacheKey = req.url;
   
@@ -89,12 +90,10 @@ app.get('/nodejento', asyncHandler(async (req, res) => {
 
   // Default SKUs for demo (in production, these would come from query params)
   const skus = req.query.skus 
-    ? req.query.skus.split(',')
+    ? req.query.skus.split(',').map(sku => sku.trim())
     : ['24-MB01', '24-MB04', '24-WG084', '24-WG085'];
   
-  const storeIds = req.query.store_ids
-    ? req.query.store_ids.split(',').map(id => parseInt(id, 10))
-    : [0, 1];
+  const storeIds = req.validatedStoreIds || [0, 1];
 
   console.time(`ORM-${requestId}`);
   
@@ -120,18 +119,9 @@ app.get('/nodejento', asyncHandler(async (req, res) => {
 }));
 
 // Product by SKU endpoint
-app.get('/product/:sku', asyncHandler(async (req, res) => {
+app.get('/product/:sku', validate.productSku, validate.storeIds, asyncHandler(async (req, res) => {
   const { sku } = req.params;
-  const storeIds = req.query.store_ids
-    ? req.query.store_ids.split(',').map(id => parseInt(id, 10))
-    : [0, 1];
-
-  if (!sku) {
-    return res.status(400).json({
-      success: false,
-      error: 'SKU parameter is required'
-    });
-  }
+  const storeIds = req.validatedStoreIds || [0, 1];
 
   const cacheKey = `product:${sku}:${storeIds.join(',')}`;
   
