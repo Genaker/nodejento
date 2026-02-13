@@ -4,8 +4,8 @@ const fs = require('fs');
 
 const execp = util.promisify(exec);
 
-
-let BP = '/var/www/html/magento/';
+// Use environment variable if available, otherwise use default
+let BP = process.env.MAGENTO_BASE_PATH || '/var/www/html/magento/';
 
 function getBasePath(){
     console.log(this.BP);
