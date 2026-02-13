@@ -21,7 +21,7 @@ This repo uses the Sequelize library to connect to the Magento 2 database direct
 - ✅ **Comprehensive Error Handling** - Production-ready error management with proper HTTP status codes
 - ✅ **Smart Caching** - Memory-safe caching with TTL and size limits (prevents memory leaks)
 - ✅ **Input Validation** - Request validation middleware for secure endpoints
-- ✅ **Updated Dependencies** - Latest Sequelize (v6.35.2) and MySQL2 (v3.6.5)
+- ✅ **Updated Dependencies** - Latest Sequelize (v6.35.2) and MySQL2 (v3.9.8)
 - ✅ **Developer Experience** - Hot reload with nodemon, better debugging
 
 👉 **See [ARCHITECTURE.md](./ARCHITECTURE.md) for complete architecture documentation.**

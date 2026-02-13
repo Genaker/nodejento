@@ -143,7 +143,7 @@ nodejento/
   "dependencies": {
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "mysql2": "^3.6.5",
+    "mysql2": "^3.9.8",
     "sequelize": "^6.35.2"
   },
   "devDependencies": {
@@ -282,14 +282,14 @@ Clears all cached data.
 
 ## Next Steps (Future Improvements)
 
-1. **Testing**: Add unit and integration tests
-2. **Validation**: Add input validation middleware
-3. **Logging**: Implement structured logging (Winston, Pino)
-4. **Documentation**: Add OpenAPI/Swagger documentation
-5. **Monitoring**: Add APM integration (New Relic, DataDog)
-6. **Database**: Add connection retry logic
-7. **Rate Limiting**: Add rate limiting middleware
-8. **CORS**: Add CORS support for web clients
+1. **Testing**: Add unit and integration tests with Jest or Mocha
+2. **Logging**: Implement structured logging (Winston, Pino)
+3. **Documentation**: Add OpenAPI/Swagger documentation
+4. **Monitoring**: Add APM integration (New Relic, DataDog)
+5. **Database**: Add connection retry logic and read replicas support
+6. **Rate Limiting**: Add rate limiting middleware for API protection
+7. **CORS**: Add CORS support for web clients
+8. **Authentication**: Add JWT-based authentication for secure endpoints
 
 ## Support
 
