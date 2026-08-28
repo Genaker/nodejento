@@ -1,0 +1,11 @@
+<%- include('partials/head', { title: 'Home' }) %>
+  <h1 class="text-2xl font-semibold mb-4">Categories</h1>
+  <ul class="grid grid-cols-2 md:grid-cols-3 gap-3">
+    <% categories.forEach(function(cat) { %>
+      <li class="border rounded p-4 bg-white">
+        <a class="text-blue-600 hover:underline" href="/category/<%= cat.entity_id %>"><%= cat.name || ('Category #' + cat.entity_id) %></a>
+      </li>
+    <% }) %>
+  </ul>
+  <p class="mt-6 text-sm text-gray-500"><%= productCount %> products in catalog.</p>
+<%- include('partials/foot') %>

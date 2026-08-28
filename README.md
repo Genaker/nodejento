@@ -497,3 +497,177 @@ magentoConfig.getDBConfig().then((p)=> console.log(p));
 Result: 
 
 ![image](https://user-images.githubusercontent.com/9213670/153312851-9c95e513-c403-4ed1-9662-0720a90b91e9.png)
+
+## Standalone `.env` configuration (no PHP/Magento bootstrap required)
+
+The original `config.js` shells out to PHP to read a real Magento install's
+`app/etc/env.php`, which only works from inside a full Magento codebase.
+`config/db.js` adds a second, independent path that reads plain `.env`
+variables via `dotenv` and builds the Sequelize connection directly -- no
+PHP, no Magento bootstrap, just a MySQL host/port/user/password/db. This is
+what `import_products.js`, `server.js`, and the test suite all use.
+
+```
+cp .env.example .env   # then edit DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD
+```
+
+## Magmi-Style Bulk Import
+
+`import_products.js` is a Magmi-style batched CSV importer, matching the
+same pattern used by the sibling Go, Rust, Laravel (laragento), and Python
+(PyGento) implementations: resolve existing SKUs in one batched query,
+bulk-insert new `catalog_product_entity` rows (relying on MySQL/InnoDB's
+consecutive-auto-increment-lock guarantee for a single multi-row `INSERT`),
+bucket attribute values by EAV `backend_type`, and batch-upsert each of the
+5 value tables via `Model.bulkCreate(rows, { updateOnDuplicate: ['value'] })`
+-- which Sequelize compiles into one genuine multi-row
+`INSERT ... ON DUPLICATE KEY UPDATE` per chunk on MySQL, not N separate
+statements.
+
+```
+node import_products.js products.csv --batch-size 500 --store 0 --attribute-set 4
+```
+
+Same 1000-row/13-attribute-column CSV used across this project family,
+measured back-to-back in the same session as Laravel and PyGento against
+the same real Magento database (see the cross-language table and
+methodology note in [gogento-rust's README](https://github.com/Genaker/gogento-rust)):
+
+| | Import (1000 rows) | Max RSS |
+|---|---|---|
+| Laravel, Eloquent `upsert()` | ~6.9s | 47.5 MB |
+| Node.js, Sequelize `bulkCreate` upsert | ~6.9s | ~90 MB |
+| Python, SQLAlchemy Core `upsert` | ~7.7s | 46.9 MB |
+
+All three are within noise of each other on timing. Node's memory is still
+somewhat higher than Laravel/PyGento (V8's baseline heap plus Sequelize's
+own per-model bookkeeping for the 7 tables actually used), but is no longer
+the outlier it originally was -- see below.
+
+### Lazy model loading for the CLI (`getLiteModels`)
+
+The importer originally called the same `getModels()` the storefront uses,
+which runs `Models/init-models.js`: `require()`s all 347
+sequelize-auto-generated model files and `sequelize.define()`s + associates
+every one of them, regardless of which tables the caller touches. That's a
+reasonable cost for `server.js` -- a long-lived process that loads it once
+and keeps every model in memory for as long as the server runs -- but
+`import_products.js` is a short-lived CLI process that pays that cost fresh
+on *every single invocation* and only ever touches 7 of the 347 tables
+(`catalog_product_entity`, its 5 EAV value tables, `eav_attribute`).
+
+Measured in isolation (3 runs each, same host, same DB connection setup):
+
+| | Time | 
+|---|---|
+| `initModels()` (full graph, 347 tables) | ~1,330ms |
+| `getLiteModels([...7 tables])` (new) | ~20ms |
+
+`config/db.js` now exposes `getLiteModels(names)`, which requires and
+defines only the named models directly from their individual
+sequelize-auto files (each is a self-contained
+`(sequelize, DataTypes) => sequelize.define(...)` factory with no
+cross-file requires) -- skipping `init-models.js` and its association
+wiring entirely. `import_products.js` uses this; `server.js` is unchanged
+and still uses the full `getModels()`, since a web server process
+genuinely does benefit from loading the full model graph once and reusing
+it for the rest of its life, rather than needing it lazy.
+
+This is a real, verified ~65x cut in the CLI's fixed per-run overhead, and
+it shows up cleanly in memory (Max RSS dropped from ~155MB to ~90MB across
+5 repeated end-to-end 1000-row import runs). It does *not* show up cleanly
+in the end-to-end wall-clock numbers in the table above, though -- those
+are dominated by DB round-trip time on the same shared, real, actively-used
+MySQL instance discussed throughout this project family's benchmarks, and
+that noise (which moved the whole ORM-tier group from ~4.4-4.5s in one
+session to ~6.9-7.7s in another, see gogento-rust's README) is larger than
+the ~1.3s this fix saves. The fix is real and worth keeping regardless --
+memory is a clean, low-noise signal for it even when total time isn't.
+
+## Storefront
+
+`server.js` is a small Express + EJS storefront exercising the same
+read path the ORM layer is meant for: `/` (category list), `/category/:id`
+(paginated product grid, real DB-level `LIMIT`/`OFFSET` via the
+`catalog_category_product` link table, not in-memory pagination), and
+`/product/:id` (detail page with a category breadcrumb).
+
+```
+node server.js
+```
+
+`utils/eav.js` provides the batched attribute-flattening helper
+(`flattenProducts`/`flattenCategories`) used by every route: one query per
+EAV value table for the *whole* batch of entity ids, never one query per
+row -- the same N+1-avoidance shape as laragento's `EavFlattener` and
+PyGento's `utils/eav.py`.
+
+## Testing
+
+```
+npm test
+```
+
+12 tests via Node's built-in `node:test` runner, covering model loading,
+EAV batching (including a live query-count regression test), the importer
+(create + re-import-updates-in-place + missing-file), and two direct
+regression tests for real bugs found in `app.js` (below). Tests that need
+the database skip cleanly (rather than failing) when it isn't reachable.
+
+## Bugs Found and Fixed
+
+Reviewing the existing `app.js` demo route surfaced several real bugs,
+independent of anything new added above:
+
+1. **Broken response cache -- wrong key on write, and no `return` on hit.**
+   The cache was written as `requestCache[req] = json` (the `req` object
+   stringifies to the same key, `"[object Object]"`, on every request,
+   regardless of URL) but read as `requestCache.hasOwnProperty(req.url)` (a
+   different key) -- so the cache could never hit, silently defeating its
+   own purpose. Even if the keys had matched, the cache-hit branch called
+   `res.send(json)` with no `return`, so execution would have fallen
+   through into the rest of the handler and sent a second response
+   (Express raises "Cannot set headers after they are sent" in that case).
+   Fixed: consistent `req.url` key on both read and write, plus a `return`
+   after the cache-hit send. Regression test:
+   `tests/app.test.js` ("caches by request URL and serves the cached
+   response on the second call").
+
+2. **Startup race condition on global EAV state.** `EAV`, `EavOptionsValues`,
+   and `VisibleOnFront` were populated by an unawaited `Promise.all(...)`
+   fired at module load, while the `/nodejento` route read them
+   synchronously with no wait -- any request arriving before that promise
+   resolved would crash with a `TypeError` reading a property of
+   `undefined`. Fixed via an explicit `ready` promise the route `await`s
+   before touching any of the three.
+
+3. **`transpond()` crashed on any product with tier prices.** It initialized
+   `dataValues.tier_price = {}` but then pushed onto `product.tier_price`
+   (missing the `dataValues.` prefix, and pushing onto a plain object
+   besides) -- always `undefined`, so `.push()` always threw. Fixed to
+   build the array directly and assign it to `dataValues.tier_price`.
+   Regression test: `tests/app.test.js` ("does not crash on a product with
+   tier prices").
+
+4. **`fetchAttributeOptionValues()`'s leftover, misleading filter.** The
+   query was `select * from eav_attribute_option_value where value_id `
+   -- a dangling `WHERE value_id` with nothing after it, left over from a
+   commented-out `in (5459,5471)` filter. In MySQL's boolean-context
+   truthiness rule this excludes rows where `value_id = 0` only (none, since
+   it's an auto-increment PK starting at 1), so it silently loaded the
+   *entire* table while reading like a real filter. Fixed to drop the dead
+   clause and load the table explicitly, matching what it actually did.
+
+5. **`utils/eav.js`'s own category/product mixup (caught while building
+   the storefront above, not in the pre-existing code).** An early version
+   of the flatten helper had one shared attribute-id cache and one shared
+   `flatten()` reused for both products and categories. Product and
+   category entity ids overlap numerically (both start at 1), and `name`
+   has a different `attribute_id` per `entity_type_id` (73 for products, 45
+   for categories in this database) with entirely separate value tables --
+   so category page `/category/2` silently rendered a *product's* name
+   instead of throwing or erroring. Fixed by splitting into
+   type-keyed caches and separate `flattenProducts`/`flattenCategories`
+   entry points. Regression test: `tests/eav.test.js` ("flattenCategory
+   resolves the category name attribute, not a same-numbered product's
+   name").

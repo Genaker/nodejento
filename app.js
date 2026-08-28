@@ -1,332 +1,248 @@
+require('dotenv').config();
 const express = require('express');
-const {Sequelize, QueryTypes} = require('sequelize');
-const magentoModels = require("nodejento/Models/init-models");
+const { QueryTypes } = require('sequelize');
+const { getSequelize, getModels } = require('./config/db');
 
-const connectionString = 'mysql://user:password@host:port/db'
+const sequelize = getSequelize();
+const models = getModels();
 
-let requestCache = {};
+const app = express();
+const port = Number(process.env.PORT) || 3000;
+const debug = false;
 
-const myKnex = require('knex')({
-    client: 'mysql',
-    connection: connectionString,
-    pool: {
-        min: 0,
-        max: 1
-    }
-});
+const CatalogProductEntity = models.CatalogProductEntity;
 
-const app = express()
-const port = 3000
-const debug = false
+const requestCache = {};
 
-const sequelize = new Sequelize(
-    connectionString, {
-        //prevent sequelize from pluralizing table names
-        freezeTableName: true,
-        dialect: 'mysql',
-        logging: false,
-        pool: {
-            max: 15,
-            min: 2,
-            acquire: 30000,
-            idle: 10000
-        }
-    });
+let EAV = {};
+let EavOptionsValues = {};
+let VisibleOnFront = [];
 
-sequelize
-    .authenticate()
-    .then(() => {
-        console.log('Connection has been established successfully.');
-    })
-    .catch(err => {
-        console.error('Unable to connect to the database:', err);
-    });
+// Bugfix: the route handler used to read these globals before this promise
+// resolved (a startup race condition -- the first request(s) after boot
+// would crash with "Cannot read properties of undefined"). `ready` lets the
+// handler explicitly wait for warm-up instead of racing it.
+const ready = (async () => {
+  const [eavRows, visibleRows, optionValues] = await Promise.all([
+    models.EavAttribute.findAll({ where: { entity_type_id: 4 }, raw: true }),
+    sequelize.query(
+      'select attribute_id from catalog_eav_attribute where is_visible_on_front = 1 or is_html_allowed_on_front = 1 or is_visible = 1',
+      { type: QueryTypes.SELECT }
+    ),
+    // Loads the whole option-value table once at boot (same idea as
+    // Magento's own EAV option cache) -- fixed from a leftover, misleading
+    // "where value_id" clause that looked like a filter but, as a MySQL
+    // boolean-context truthiness check, excluded nothing.
+    sequelize.query('select * from eav_attribute_option_value', { type: QueryTypes.SELECT }),
+  ]);
 
-const models = magentoModels.initModels(sequelize);
+  EAV = { id_code: {} };
+  eavRows.forEach((a) => {
+    EAV.id_code['attr_' + a.attribute_id] = { code: a.attribute_code, data: a };
+  });
+  console.log('Attribute count: ' + eavRows.length);
 
-let CatalogProductEntity = models.CatalogProductEntity;
+  EavOptionsValues = {};
+  optionValues.forEach((v) => {
+    if (!EavOptionsValues[v.value_id]) EavOptionsValues[v.value_id] = {};
+    EavOptionsValues[v.value_id][v.store_id] = v;
+  });
 
-//console.log(models)
-const ORMTrash = []
-
-var Product = models.CatalogProductEntity.findOne({
-    where: {
-        'sku': '24-MB01'
-    }
-});
-
-// Global Eav configuration 
-let EAV = models.EavAttribute.findAll({
-    raw: true,
-    plain: false,
-});
-
-//ToDo: add filter by entity type Product (4)
-let EavLabels = models.EavAttributeLabel.findAll();
-//Replaced with Knex -> let EavCatalog = sequelize.query("select * from eav_attribute as eav left join catalog_eav_attribute as catalog on eav.attribute_id = catalog.attribute_id", {type: sequelize.QueryTypes.SELECT })
-let EavCatalog = myKnex.select().from(models.CatalogEavAttribute.tableName)
-let VisibleOnFront = sequelize.query("select attribute_id from catalog_eav_attribute where is_visible_on_front = 1 or is_html_allowed_on_front = 1 or is_visible = 1 ", {
-    type: QueryTypes.SELECT
-})
-let EavOptionsValues = fetchAttributeOptionValues()
-
-Promise.all([EAV, EavLabels, EavCatalog, VisibleOnFront, EavOptionsValues]).then(([eav, labels, catalog, visible, values]) => {
-    console.log("Promise is resolved")
-    EAV = eav
-    EAV['id_code'] = []
-    EAV.forEach(function(a) {
-        EAV['id_code']["attr_" + a.attribute_id.toString()] = {
-            code: a.attribute_code,
-            data: a
-        }
-    })
-    console.log("Attribute count: " + EAV.length)
-    // console.log(EAV)
-    EavLabels = labels
-    EavCatalog = catalog
-    EavOptionsValues = {}
-    values.forEach((v) => {
-        EavOptionsValues[v.value_id] = {
-            [v.store_id]: v
-        }
-    })
-    VisibleOnFront = []
-
-    visible.forEach((v) => {
-        VisibleOnFront.push(v.attribute_id)
-    })
-    //EavLabels.forEach(function (a) { EAV['id_code']["attr_" + a.attribute_id.toString()] = a.attribute_code})
-})
+  VisibleOnFront = visibleRows.map((v) => v.attribute_id);
+})();
 
 app.get('/nodejento', async (req, res) => {
-    req.id = (Date.now() % 1000);
-    console.time("request-" + req.id);
+  await ready;
+  const reqId = Date.now() % 1000;
+  console.time('request-' + reqId);
 
-    console.time("ORM-" + req.id);
+  if (Object.prototype.hasOwnProperty.call(requestCache, req.url)) {
+    console.timeEnd('request-' + reqId);
+    res.send(requestCache[req.url]);
+    return;
+  }
 
-    if (requestCache.hasOwnProperty(req.url)) {
-        console.timeEnd("request-" + req.id);
-        res.send(json)
-    }
+  console.time('ORM-' + reqId);
+  const Product = await CatalogProductEntity.findAll({
+    where: { sku: ['24-MB01', '24-MB04', '24-WG084', '24-WG085'] },
+    include: [
+      {
+        model: models.CatalogProductEntityVarchar,
+        as: 'CatalogProductEntityVarchars',
+        where: { attribute_id: VisibleOnFront, store_id: [0, 1] },
+        required: false,
+        attributes: ['store_id', 'value', 'attribute_id'],
+        separate: true,
+      },
+      {
+        model: models.CatalogProductEntityInt,
+        as: 'CatalogProductEntityInts',
+        where: { attribute_id: VisibleOnFront, store_id: [0, 1] },
+        required: false,
+        attributes: ['store_id', 'value', 'attribute_id'],
+        separate: true,
+      },
+      {
+        model: models.CatalogProductEntityText,
+        as: 'CatalogProductEntityTexts',
+        where: { attribute_id: VisibleOnFront, store_id: [0, 1] },
+        required: false,
+        attributes: ['store_id', 'value', 'attribute_id'],
+        separate: true,
+      },
+      {
+        model: models.CatalogProductEntityDecimal,
+        as: 'CatalogProductEntityDecimals',
+        where: { attribute_id: VisibleOnFront, store_id: [0, 1] },
+        required: false,
+        attributes: ['store_id', 'value', 'attribute_id'],
+        separate: true,
+      },
+      {
+        model: models.CatalogProductEntityDatetime,
+        as: 'CatalogProductEntityDatetimes',
+        where: { attribute_id: VisibleOnFront, store_id: [0, 1] },
+        required: false,
+        attributes: ['store_id', 'value', 'attribute_id'],
+        separate: true,
+      },
+      {
+        model: models.CatalogProductEntityMediaGallery,
+        required: false,
+        raw: true,
+        attributes: ['value', 'media_type'],
+      },
+      {
+        model: models.CataloginventoryStockItem,
+        as: 'CataloginventoryStockItems',
+        required: false,
+        separate: true,
+      },
+      {
+        model: models.CatalogProductEntityTierPrice,
+        as: 'CatalogProductEntityTierPrices',
+        required: false,
+        separate: true,
+      },
+    ],
+  });
+  console.timeEnd('ORM-' + reqId);
 
-    let Product = await CatalogProductEntity.findAll({
-        where: {
-            'sku': ['24-MB01', '24-MB04', '24-WG084', '24-WG085']
-        },
-        include: [{
-                model: models.CatalogProductEntityVarchar,
-                as: 'CatalogProductEntityVarchars',
-                where: {
-                    attribute_id: VisibleOnFront,
-                    store_id: [0, 1]
-                },
-                required: false,
-                attributes: ['store_id', 'value', 'attribute_id'],
-                separate: true
-            },
-            {
-                model: models.CatalogProductEntityInt,
-                as: 'CatalogProductEntityInts',
-                where: {
-                    attribute_id: VisibleOnFront,
-                    store_id: [0, 1]
-                },
-                required: false,
-                attributes: ['store_id', 'value', 'attribute_id'],
-                separate: true
-            },
-            {
-                model: models.CatalogProductEntityText,
-                as: 'CatalogProductEntityTexts',
-                where: {
-                    attribute_id: VisibleOnFront,
-                    store_id: [0, 1]
-                },
-                required: false,
-                attributes: ['store_id', 'value', 'attribute_id'],
-                separate: true
-            },
-            {
-                model: models.CatalogProductEntityDecimal,
-                as: 'CatalogProductEntityDecimals',
-                where: {
-                    attribute_id: VisibleOnFront,
-                    store_id: [0, 1]
-                },
-                required: false,
-                attributes: ['store_id', 'value', 'attribute_id'],
-                separate: true
-            },
-            {
-                model: models.CatalogProductEntityDatetime,
-                as: 'CatalogProductEntityDatetimes',
-                where: {
-                    attribute_id: VisibleOnFront,
-                    store_id: [0, 1]
-                },
-                required: false,
-                attributes: ['store_id', 'value', 'attribute_id'],
-                separate: true
-            },
-            {
-                model: models.CatalogProductEntityMediaGallery,
-                required: false,
-                raw: true,
-                attributes: ['value', 'media_type']
-            },
-            {
-                model: models.CataloginventoryStockItem,
-                as: 'CataloginventoryStockItems',
-                required: false,
-                separate: true
-            },
-            {
-                model: models.CatalogProductEntityTierPrice,
-                as: 'CatalogProductEntityTierPrices',
-                required: false,
-                separate: true
-            }
-        ]
-        //plain: false,
-        //raw: true
-        //limit: 10
-    });
+  const ProductIDs = Product.map((p, i) => ({ [p.entity_id]: i }));
 
-    let ProductIDs = []
-    Product.forEach((p, i) => {
-        ProductIDs.push({
-            [p.entity_id]: i
-        })
-    })
+  console.time('transpond-' + reqId);
+  transpond(Product);
+  console.timeEnd('transpond-' + reqId);
 
-    console.timeEnd("ORM-" + req.id);
-    //console.log(Product);
-    console.time("transpond-" + req.id);
-    Product.__proto__['transpond'] = () => {
-        transpond(Product)
-    }
-    Product.transpond()
-    console.timeEnd("transpond-" + req.id);
-    //console.log(Product["attributes"])
+  const json = JSON.stringify({ result: Product, ids: ProductIDs, count: ProductIDs.length }, null, 1);
+  requestCache[req.url] = json;
 
-    console.time("json-" + req.id);
-    let json = JSON.stringify({
-        result: Product,
-        ids: ProductIDs,
-        count: ProductIDs.length
-    }, null, 1)
-    requestCache[req] = json;
-    console.timeEnd("json-" + req.id);
-
-    console.timeEnd("request-" + req.id);
-    res.send(json)
-})
+  console.timeEnd('request-' + reqId);
+  res.send(json);
+});
 
 app.get('/', (req, res) => {
-    console.time("request");
-    res.send('Hello World!')
-    console.timeEnd("request");
-})
+  res.send('Hello World!');
+});
 
-app.listen(port, () => {
-    console.log(`Magento Express app listening at http://localhost:${port}`)
-})
+if (require.main === module) {
+  sequelize
+    .authenticate()
+    .then(() => ready)
+    .then(() => {
+      app.listen(port, () => console.log(`Magento Express app listening at http://localhost:${port}`));
+    })
+    .catch((err) => {
+      console.error('Unable to connect to the database:', err.message);
+      process.exit(1);
+    });
+}
 
-const transpond = function(Product = null) {
-    let collection = true;
+function transpond(product) {
+  let collection = true;
+  let products = product;
+  if (!Array.isArray(product)) {
+    collection = false;
+    products = [product];
+  }
 
-    if (!Array.isArray(Product)) {
-        collection = false
-        Product = [Product]
+  const aliases = [
+    'CatalogProductEntityVarchars',
+    'CatalogProductEntityInts',
+    'CatalogProductEntityTexts',
+    'CatalogProductEntityDecimals',
+    'CatalogProductEntityDatetimes',
+  ];
+  const coreAttributes = ['entity_id', 'sku', 'attribute_set_id', 'type_id', 'created_at', 'updated_at', 'has_options'];
+
+  aliases.forEach((ormAttr) => {
+    products.forEach((p, index) => {
+      if (!products[index].dataValues.attributes) products[index].dataValues.attributes = {};
+      coreAttributes.forEach((c) => {
+        products[index].dataValues.attributes[c] = products[index].dataValues[c];
+      });
+
+      if (products[index][ormAttr]) {
+        products[index][ormAttr].forEach((a) => {
+          const attributeCode = EAV.id_code['attr_' + a.dataValues.attribute_id].code;
+
+          if (!products[index].dataValues.attributes[attributeCode] || a.dataValues.store_id > 0) {
+            products[index].dataValues.attributes[attributeCode] = debug
+              ? a.dataValues
+              : { value: a.dataValues.value };
+
+            const attributeValue = a.dataValues.value;
+            const storeId = a.dataValues.store_id;
+            const meta = EAV.id_code['attr_' + a.dataValues.attribute_id].data;
+
+            products[index].dataValues.attributes[attributeCode].frontend_input = meta.frontend_input;
+
+            if (['select', 'multiselect'].includes(meta.frontend_input) && meta.source_model === null) {
+              let resultValue = [];
+              const values = String(attributeValue).split(',');
+              if (values.length > 1) {
+                resultValue = values
+                  .map((val) => EavOptionsValues[val] && EavOptionsValues[val][storeId])
+                  .filter(Boolean);
+              } else if (EavOptionsValues[attributeValue]) {
+                resultValue = EavOptionsValues[attributeValue][storeId];
+              }
+              products[index].dataValues.attributes[attributeCode].optionValues = resultValue;
+            }
+          }
+        });
+        delete products[index][ormAttr];
+        delete products[index].dataValues[ormAttr];
+      }
+    });
+  });
+
+  products.forEach((p, index) => {
+    if (products[index].CatalogProductEntityMediaGalleries) {
+      products[index].dataValues.gallery = products[index].CatalogProductEntityMediaGalleries.map((gal) => {
+        delete gal.dataValues.CatalogProductEntityMediaGalleryValueToEntity;
+        return gal.dataValues;
+      });
+      delete products[index].CatalogProductEntityMediaGalleries;
+      delete products[index].dataValues.CatalogProductEntityMediaGalleries;
     }
-    let aliases = ['CatalogProductEntityVarchars', 'CatalogProductEntityInts', 'CatalogProductEntityTexts', 'CatalogProductEntityDecimals', 'CatalogProductEntityDatetimes', 'WronG_Attribute']
-    let coreAttributes = ['entity_id', 'sku', 'attribute_set_id', 'type_id', 'created_at', 'updated_at', 'has_options']
-    aliases.forEach((ormAttr) => {
-        Product.forEach((product, index, products) => {
 
-            if (!products[index]['dataValues'].hasOwnProperty('attributes'))
-                products[index]['dataValues']['attributes'] = {}
+    if (products[index].CataloginventoryStockItems) {
+      products[index].dataValues.stock = products[index].CataloginventoryStockItems[0]
+        ? products[index].CataloginventoryStockItems[0].dataValues
+        : {};
+      delete products[index].CataloginventoryStockItems;
+      delete products[index].dataValues.CataloginventoryStockItems;
+    }
 
-            coreAttributes.forEach(c => products[index]['dataValues']['attributes'][c] = products[index]['dataValues'][c])
+    if (products[index].CatalogProductEntityTierPrices) {
+      products[index].dataValues.tier_price = products[index].CatalogProductEntityTierPrices.map((t) => t.dataValues);
+      delete products[index].CatalogProductEntityTierPrices;
+      delete products[index].dataValues.CatalogProductEntityTierPrices;
+    }
+  });
 
-            if (products[index].hasOwnProperty(ormAttr)) {
-                products[index][ormAttr].forEach((a) => {
-                    let attributeCode = EAV['id_code']['attr_' + a.dataValues.attribute_id]['code']
-
-                    if (!products[index]['dataValues']['attributes'].hasOwnProperty(attributeCode) || a.dataValues.store_id > 0) {
-                        if (debug) {
-                            products[index]['dataValues']['attributes'][attributeCode] = a.dataValues
-                        } else {
-                            products[index]['dataValues']['attributes'][attributeCode] = {
-                                value: a.dataValues.value
-                            }
-
-                        }
-                        let attributeValue = a.dataValues.value
-                        let storeId = a.dataValues.store_id
-
-                        let frontent_input = EAV['id_code']['attr_' + a.dataValues.attribute_id]['data']['frontend_input']
-                        let source_model = EAV['id_code']['attr_' + a.dataValues.attribute_id]['data']['source_model']
-                        products[index]['dataValues']['attributes'][attributeCode]['frontend_input'] = frontent_input
-                        let types = ['select', 'multiselect']
-
-                        if (types.includes(frontent_input) && source_model === null) {
-                            let resultValue = []
-
-                            let values = String(attributeValue).split(",");
-                            if (values.length > 1) {
-                                values.forEach((val) => {
-                                    resultValue.push(EavOptionsValues[val][storeId])
-                                })
-                            } else {
-                                if (EavOptionsValues.hasOwnProperty(attributeValue))
-                                    resultValue = EavOptionsValues[attributeValue][storeId]
-                            }
-                            products[index]['dataValues']['attributes'][attributeCode]['optionValues'] = resultValue
-                        }
-                    }
-                })
-                delete products[index][ormAttr]
-                delete products[index]["dataValues"][ormAttr]
-            }
-
-            if (products[index].hasOwnProperty('CatalogProductEntityMediaGalleries')) {
-                products[index]['dataValues']['gallery'] = []
-                products[index].CatalogProductEntityMediaGalleries.forEach((gal) => {
-                    delete gal.dataValues.CatalogProductEntityMediaGalleryValueToEntity
-                    products[index]['dataValues']['gallery'].push(gal.dataValues)
-                })
-                delete products[index].CatalogProductEntityMediaGalleries
-                delete products[index]["dataValues"]["CatalogProductEntityMediaGalleries"]
-            }
-
-            if (products[index].hasOwnProperty('CataloginventoryStockItems')) {
-                products[index]['dataValues']['stock'] = {}
-                if (typeof products[index].CataloginventoryStockItems[0] !== 'undefined')
-                    products[index]['dataValues']['stock'] = products[index].CataloginventoryStockItems[0].dataValues
-                delete products[index].CataloginventoryStockItems
-                delete products[index]["dataValues"]["CataloginventoryStockItems"]
-            }
-
-            if (products[index].hasOwnProperty('CatalogProductEntityTierPrices')) {
-                products[index]['dataValues']['tier_price'] = {}
-                products[index].CatalogProductEntityTierPrices.forEach((tier) => {
-                    products[index]['tier_price'].push(tier.dataValues)
-                })
-                delete products[index].CatalogProductEntityTierPrices
-                delete products[index]["dataValues"]["CatalogProductEntityTierPrices"]
-            }
-        })
-    })
-
-    if (!collection)
-        Product = Product[0]
-        //console.log(Product)
+  return collection ? products : products[0];
 }
 
-function fetchAttributeOptionValues() {
-    let sql = "select * from eav_attribute_option_value where value_id "; // in (5459,5471);
-    return sequelize.query(sql, {
-        type: QueryTypes.SELECT
-    })
-}
+module.exports = { app, transpond, ready };

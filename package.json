@@ -2,9 +2,9 @@
   "name": "nodejento",
   "version": "1.0.0",
   "description": "Magento 2 NodeJS",
-  "main": "test.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/"
   },
   "repository": {
     "type": "git",
@@ -22,6 +22,10 @@
   },
   "homepage": "https://github.com/Genaker/nodejento#readme",
   "dependencies": {
+    "csv-parse": "^7.0.2",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
     "mysql2": "^2.2.5",
     "sequelize": "^6.6.5"
   }

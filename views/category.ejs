@@ -1,0 +1,16 @@
+<%- include('partials/head', { title: category.name || ('Category #' + category.entity_id) }) %>
+  <h1 class="text-2xl font-semibold mb-4"><%= category.name || ('Category #' + category.entity_id) %></h1>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <% products.forEach(function(p) { %>
+      <a href="/product/<%= p.entity_id %>" class="border rounded p-3 bg-white hover:shadow">
+        <div class="font-medium"><%= p.attrs.name || p.sku %></div>
+        <div class="text-sm text-gray-500">$<%= p.attrs.price || '0.00' %></div>
+      </a>
+    <% }) %>
+  </div>
+  <div class="mt-6 flex gap-3">
+    <% if (page > 1) { %><a class="text-blue-600" href="?page=<%= page - 1 %>">&larr; Prev</a><% } %>
+    <span class="text-gray-500">Page <%= page %> of <%= totalPages %></span>
+    <% if (page < totalPages) { %><a class="text-blue-600" href="?page=<%= page + 1 %>">Next &rarr;</a><% } %>
+  </div>
+<%- include('partials/foot') %>

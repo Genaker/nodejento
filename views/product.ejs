@@ -1,0 +1,12 @@
+<%- include('partials/head', { title: product.attrs.name || product.sku }) %>
+  <nav class="text-sm text-gray-500 mb-4">
+    <% breadcrumbs.forEach(function(b) { %>
+      <a class="hover:underline" href="/category/<%= b.entity_id %>"><%= b.name %></a> /
+    <% }) %>
+  </nav>
+  <h1 class="text-2xl font-semibold"><%= product.attrs.name || product.sku %></h1>
+  <p class="text-gray-500 mb-4">SKU: <%= product.sku %></p>
+  <p class="text-xl font-bold mb-4">$<%= product.attrs.price || '0.00' %></p>
+  <!-- descriptionHtml is pre-escaped then <br>-injected server-side (escape-then-inject), never raw user/catalog HTML -->
+  <div class="prose"><%- descriptionHtml %></div>
+<%- include('partials/foot') %>
